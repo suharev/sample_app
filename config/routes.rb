@@ -1,4 +1,7 @@
 SampleApp::Application.routes.draw do
+  devise_for :users, :controllers => { :omniauth_callbacks => "users/omniauth_callbacks" }
+  devise_for :users
+
   resources :users
   resources :sessions, only: [:new, :create, :destroy]
   resources :microposts, only: [:create, :destroy]
@@ -13,6 +16,31 @@ SampleApp::Application.routes.draw do
   match '/contact', to: 'static_pages#contact'
   match '/signup',  to: 'users#new'
 
+  ################ Devise + Oauth #####################
+  authenticated :user do
+    root :to => 'sessions#new'
+  end
+
+  devise_scope :user do
+    get '/users/auth/:provider' => 'users/omniauth_callbacks#passthru'
+  end
+
+  devise_scope :user do
+    get "/login" => "devise/sessions#new"
+  end
+
+  devise_scope :user do
+    delete "/logout" => "devise/sessions#destroy"
+  end
+
+  devise_for :users, :skip => [:sessions]
+  as :user do
+    get 'signin' => 'devise/sessions#new', :as => :new_user_session
+    post 'signin' => 'devise/sessions#create', :as => :user_session
+    delete 'signout' => 'devise/sessions#destroy', :as => :destroy_user_session
+  end
+
+  ######################################################
 
   # The priority is based upon order of creation:
   # first created -> highest priority.
